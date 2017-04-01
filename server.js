@@ -8,10 +8,10 @@ var mongoCollection = "docs";
 var app = express();
 mongo.MongoClient;
 
-app.get('/new', function(req, res) {
-    var originalUrl;
+app.get('/new/:url', function(req, res) {
+    var originalUrl = req.params.url;
     var shortUrl;
-    
+    console.log(originalUrl);
     addSite("www.bbc.co.uk", "shorturl");
     
     res.setHeader('Content-Type', 'application/json');
