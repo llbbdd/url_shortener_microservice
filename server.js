@@ -90,8 +90,6 @@ function generateUniqueIdentifier(callback){
 }
 
 function identifierIsUnique(uniqueIdentifier, callback){
-    var isUnique = false;
-    
     mongo.connect(mongoDatabase, function(err, db) {
         if(err){
             console.log("Database error - Can't connect to database");
