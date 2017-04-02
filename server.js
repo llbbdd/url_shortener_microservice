@@ -41,6 +41,8 @@ app.listen(port, function () {
     console.log('URL Shortener Microservice app listening on port ' + port);
 });
 
+
+
 function retrieveOriginalUrl(shortUrl, callback){
     mongo.connect(mongoDatabase, function(err, db) {
         if(err){
@@ -121,7 +123,7 @@ function identifierIsUnique(uniqueIdentifier, callback){
 }
 
 function addSite(originalUrl, shortUrl, callback){
-    var site = {original: originalUrl, short: shortUrl};
+    var site = {original: "/" + originalUrl, short: shortUrl};
     
     mongo.connect(mongoDatabase, function(err, db) {
         if(err){
