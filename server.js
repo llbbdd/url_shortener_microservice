@@ -10,6 +10,14 @@ var mongoCollection = "docs";
 var app = express();
 mongo.MongoClient;
 
+app.get('/:shortUrl', function(req, res) {
+    var shortUrl = req.params.shortUrl;
+    
+    retrieveOriginalUrl(shortUrl, function(originalUrl){
+        res.redirect(originalUrl[0]['original']);
+    });
+});
+
 app.get('/new/:url', function(req, res) {
     var originalUrl = req.params.url;
     
@@ -32,6 +40,30 @@ app.get('/new/:url', function(req, res) {
 app.listen(port, function () {
     console.log('URL Shortener Microservice app listening on port ' + port);
 });
+
+function retrieveOriginalUrl(shortUrl, callback){
+    mongo.connect(mongoDatabase, function(err, db) {
+        if(err){
+            console.log("Database error - Can't connect to database");
+            console.log(err);
+        }
+        else{
+            var collection = db.collection(mongoCollection);
+            
+            collection.find({"short": shortUrl}, {original: 1}).toArray(function(err, site) {
+                if(err){
+                    console.log("Database error - Can't get records");
+                    console.log(err);
+                }
+                else{
+                    callback(site);
+                }
+            });
+        }
+        
+        db.close();
+    });
+}
 
 function generateUniqueIdentifier(callback){
     crypto.randomBytes(4, function(err, buffer) {
@@ -57,6 +89,7 @@ function generateUniqueIdentifier(callback){
 
 function identifierIsUnique(uniqueIdentifier, callback){
     var isUnique = false;
+    
     mongo.connect(mongoDatabase, function(err, db) {
         if(err){
             console.log("Database error - Can't connect to database");
