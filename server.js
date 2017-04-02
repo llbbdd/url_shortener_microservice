@@ -12,9 +12,9 @@ mongo.MongoClient;
 
 app.get('/:shortUrl', function(req, res) {
     var shortUrl = req.params.shortUrl;
-    
+
     retrieveOriginalUrl(shortUrl, function(originalUrl){
-        res.redirect(originalUrl[0]['original']);
+        res.redirect(originalUrl);
     });
 });
 
@@ -28,7 +28,7 @@ app.get('/new/:url', function(req, res) {
             res.send(JSON.stringify({ "original_url": "error", "short_url": "error"}));
         }
         else{
-            generateUniqueIdentifier(function(shortUrl){
+            generateShort(function(shortUrl){
                 addSite(originalUrl, shortUrl, function(originalUrl, shortUrl){
                     res.send(JSON.stringify({ "original_url": originalUrl, "short_url": shortUrl}));
                 });
@@ -43,31 +43,7 @@ app.listen(port, function () {
 
 
 
-function retrieveOriginalUrl(shortUrl, callback){
-    mongo.connect(mongoDatabase, function(err, db) {
-        if(err){
-            console.log("Database error - Can't connect to database");
-            console.log(err);
-        }
-        else{
-            var collection = db.collection(mongoCollection);
-            
-            collection.find({"short": shortUrl}).toArray(function(err, site) {
-                if(err){
-                    console.log("Database error - Can't get records");
-                    console.log(err);
-                }
-                else{
-                    callback(site);
-                }
-            });
-        }
-        
-        db.close();
-    });
-}
-
-function generateUniqueIdentifier(callback){
+function generateShort(callback){
     crypto.randomBytes(4, function(err, buffer) {
         if(err){
             console.log("Short URL generation error - Can't create random bytes");
@@ -77,87 +53,64 @@ function generateUniqueIdentifier(callback){
             
             var identifier = buffer.toString('hex');
 
-            identifierIsUnique(identifier, function(isUnique){
+            shortIsUnique(identifier, function(isUnique){
                 if(isUnique){
                     callback(identifier);
                 }
                 else{
-                    generateUniqueIdentifier(callback);
+                    generateShort(callback);
                 }
             });
         }
     });
 }
 
-function identifierIsUnique(uniqueIdentifier, callback){
-    mongo.connect(mongoDatabase, function(err, db) {
-        if(err){
-            console.log("Database error - Can't connect to database");
-            console.log(err);
+function shortIsUnique(uniqueIdentifier, callback){
+    databaseAccess(dbFind, {"short": uniqueIdentifier}, function(results){
+        if(results.length === 0){
+            callback(true);
         }
         else{
-            var collection = db.collection(mongoCollection);
-            
-            collection.find({"short": uniqueIdentifier}).toArray(function(err, sites) {
-                if(err){
-                    console.log("Database error - Can't get records");
-                    console.log(err);
-                }
-                else{
-                    if(sites.length === 0){
-                        callback(true);
-                    }
-                    else{
-                        callback(false);
-                    }
-                }
-            });
+            callback(false);
         }
-        
-        db.close();
+    });
+}
+
+function retrieveOriginalUrl(shortUrl, callback){
+    databaseAccess(dbFind, {"short": shortUrl}, function(result){
+        if(result.length === 1){
+            callback(result[0].original);
+        }
+        else{
+            callback("");
+        }
     });
 }
 
 function addSite(originalUrl, shortUrl, callback){
-    var site = {original: "//" + originalUrl, short: shortUrl};
-    
-    mongo.connect(mongoDatabase, function(err, db) {
-        if(err){
-            console.log("Database error - Can't connect to database");
-            console.log(err);
-        }
-        else{
-            var collection = db.collection(mongoCollection);
-            
-            collection.insert(site, function(err, data) {
-                if(err){
-                    console.log("Database error - Can't insert site");
-                    console.log(err);
-                }
-            });
-            
-            callback(originalUrl, shortUrl);
-        }
-        
-        db.close();
+    databaseAccess(dbAdd, {original: "//" + originalUrl, short: shortUrl}, function(data){
+        callback(originalUrl, shortUrl);
     });
 }
 
-/*
-databaseAccess use example:
-databaseAccess(getDB, function(results){
+// databaseAccess use examples:
+// find all records
+/*databaseAccess(dbFind, null, function(results){
     console.log(results);
-});
-*/
+});*/
+// find record where short = 2cf2370e
+/*databaseAccess(dbFind, {"short": "2cf2370e"}, function(results){
+    console.log(results);
+});*/
 
-function databaseAccess(operationFunction, callback){
+function databaseAccess(operationFunction, data, callback){
     mongo.connect(mongoDatabase, function(err, db) {
         if(err){
             console.log("Database error - Can't connect to database");
             console.log(err);
         }
         else{
-            operationFunction(db, function(resultsArray){
+            operationFunction(db, data, function(resultsArray){
                 callback(resultsArray);
             });
         }
@@ -166,9 +119,8 @@ function databaseAccess(operationFunction, callback){
     });
 }
 
-// Purely for debugging purposes
-function getDB(db, callback){
-    db.collection(mongoCollection).find().toArray(function(err, sites) {
+function dbFind(db, data, callback){
+    db.collection(mongoCollection).find(data).toArray(function(err, sites) {
         if(err){
             console.log("Database error - Can't get records");
             console.log(err);
@@ -177,4 +129,15 @@ function getDB(db, callback){
             callback(sites);
         }
     });
+}
+
+function dbAdd(db, data, callback){
+    db.collection(mongoCollection).insert(data, function(err, data) {
+        if(err){
+            console.log("Database error - Can't insert site");
+            console.log(err);
+        }
+    });
+    
+    callback(data);
 }
