@@ -106,8 +106,6 @@ function identifierIsUnique(uniqueIdentifier, callback){
                     console.log(err);
                 }
                 else{
-                    db.close();
-                    
                     if(sites.length === 0){
                         callback(true);
                     }
@@ -117,11 +115,13 @@ function identifierIsUnique(uniqueIdentifier, callback){
                 }
             });
         }
+        
+        db.close();
     });
 }
 
 function addSite(originalUrl, shortUrl, callback){
-    var site = {original: "/" + originalUrl, short: shortUrl};
+    var site = {original: "//" + originalUrl, short: shortUrl};
     
     mongo.connect(mongoDatabase, function(err, db) {
         if(err){
