@@ -143,26 +143,38 @@ function addSite(originalUrl, shortUrl, callback){
     });
 }
 
-function showDB(){
+/*
+databaseAccess use example:
+databaseAccess(getDB, function(results){
+    console.log(results);
+});
+*/
+
+function databaseAccess(operationFunction, callback){
     mongo.connect(mongoDatabase, function(err, db) {
         if(err){
             console.log("Database error - Can't connect to database");
             console.log(err);
         }
         else{
-            var collection = db.collection(mongoCollection);
-            
-            collection.find().toArray(function(err, sites) {
-                if(err){
-                    console.log("Database error - Can't get records");
-                    console.log(err);
-                }
-                else{
-                    console.log(sites);
-                }
-            })
+            operationFunction(db, function(resultsArray){
+                callback(resultsArray);
+            });
         }
         
         db.close();
+    });
+}
+
+// Purely for debugging purposes
+function getDB(db, callback){
+    db.collection(mongoCollection).find().toArray(function(err, sites) {
+        if(err){
+            console.log("Database error - Can't get records");
+            console.log(err);
+        }
+        else{
+            callback(sites);
+        }
     });
 }
