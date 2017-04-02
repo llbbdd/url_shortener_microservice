@@ -52,7 +52,7 @@ function retrieveOriginalUrl(shortUrl, callback){
         else{
             var collection = db.collection(mongoCollection);
             
-            collection.find({"short": shortUrl}, {original: 1}).toArray(function(err, site) {
+            collection.find({"short": shortUrl}).toArray(function(err, site) {
                 if(err){
                     console.log("Database error - Can't get records");
                     console.log(err);
@@ -100,9 +100,7 @@ function identifierIsUnique(uniqueIdentifier, callback){
         else{
             var collection = db.collection(mongoCollection);
             
-            collection.find({
-                "short": uniqueIdentifier
-            }).toArray(function(err, sites) {
+            collection.find({"short": uniqueIdentifier}).toArray(function(err, sites) {
                 if(err){
                     console.log("Database error - Can't get records");
                     console.log(err);
