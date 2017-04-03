@@ -46,8 +46,7 @@ app.listen(port, function () {
 function generateShort(callback){
     crypto.randomBytes(4, function(err, buffer) {
         if(err){
-            console.log("Short URL generation error - Can't create random bytes");
-            console.log(err);
+            basicError("Short URL generation error - Can't create random bytes", err);
         }
         else{
             
@@ -64,6 +63,15 @@ function generateShort(callback){
         }
     });
 }
+
+function basicError(message, error){
+    console.log(message);
+    console.log(error);
+}
+
+/*
+    Project specific database functions
+*/
 
 function shortIsUnique(uniqueIdentifier, callback){
     databaseAccess(dbFind, {"short": uniqueIdentifier}, function(results){
@@ -93,6 +101,10 @@ function addSite(originalUrl, shortUrl, callback){
     });
 }
 
+/*
+    Generic database functions
+*/
+
 // databaseAccess use examples:
 // find all records
 /*databaseAccess(dbFind, null, function(results){
@@ -106,8 +118,7 @@ function addSite(originalUrl, shortUrl, callback){
 function databaseAccess(operationFunction, data, callback){
     mongo.connect(mongoDatabase, function(err, db) {
         if(err){
-            console.log("Database error - Can't connect to database");
-            console.log(err);
+            basicError("Database error - Can't connect to database", err);
         }
         else{
             operationFunction(db, data, function(resultsArray){
@@ -122,8 +133,7 @@ function databaseAccess(operationFunction, data, callback){
 function dbFind(db, data, callback){
     db.collection(mongoCollection).find(data).toArray(function(err, sites) {
         if(err){
-            console.log("Database error - Can't get records");
-            console.log(err);
+            basicError("Database error - Can't get records", err);
         }
         else{
             callback(sites);
@@ -134,8 +144,7 @@ function dbFind(db, data, callback){
 function dbAdd(db, data, callback){
     db.collection(mongoCollection).insert(data, function(err, data) {
         if(err){
-            console.log("Database error - Can't insert site");
-            console.log(err);
+            basicError("Database error - Can't insert site", err);
         }
     });
     
