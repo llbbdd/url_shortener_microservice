@@ -41,8 +41,6 @@ app.listen(port, function () {
     console.log('URL Shortener Microservice app listening on port ' + port);
 });
 
-
-
 function generateShort(callback){
     crypto.randomBytes(4, function(err, buffer) {
         if(err){
@@ -96,24 +94,26 @@ function retrieveOriginalUrl(shortUrl, callback){
 }
 
 function addSite(originalUrl, shortUrl, callback){
-    databaseAccess(dbAdd, {original: "//" + originalUrl, short: shortUrl}, function(data){
+    databaseAccess(dbInsert, {original: "//" + originalUrl, short: shortUrl}, function(data){
         callback(originalUrl, shortUrl);
     });
 }
 
 /*
     Generic database functions
+    
+    databaseAccess use examples:
+    
+    find all records
+    databaseAccess(dbFind, null, function(results){
+        console.log(results);
+    });
+    
+    find record where short = '2cf2370e'
+    databaseAccess(dbFind, {"short": "2cf2370e"}, function(results){
+        console.log(results);
+    });
 */
-
-// databaseAccess use examples:
-// find all records
-/*databaseAccess(dbFind, null, function(results){
-    console.log(results);
-});*/
-// find record where short = 2cf2370e
-/*databaseAccess(dbFind, {"short": "2cf2370e"}, function(results){
-    console.log(results);
-});*/
 
 function databaseAccess(operationFunction, data, callback){
     mongo.connect(mongoDatabase, function(err, db) {
@@ -133,7 +133,7 @@ function databaseAccess(operationFunction, data, callback){
 function dbFind(db, data, callback){
     db.collection(mongoCollection).find(data).toArray(function(err, sites) {
         if(err){
-            basicError("Database error - Can't get records", err);
+            basicError("Database error - Can't find records", err);
         }
         else{
             callback(sites);
@@ -141,7 +141,7 @@ function dbFind(db, data, callback){
     });
 }
 
-function dbAdd(db, data, callback){
+function dbInsert(db, data, callback){
     db.collection(mongoCollection).insert(data, function(err, data) {
         if(err){
             basicError("Database error - Can't insert site", err);
